@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 import { useEffect, useState } from 'react';
 import Carrusel from './carrusel';
@@ -9,12 +8,12 @@ export default function SingleMovie() {
   const [singleMovieId, setSingleMovieId] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [carruselMovies, setCarruselMovies] = useState([]);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // Obtener `id` de los parámetros de la URL
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     const movieId = queryParams.get('id');
-    console.log('Movie ID:', movieId);
     if (movieId) {
       setSingleMovieId(movieId);
     }
@@ -49,29 +48,54 @@ export default function SingleMovie() {
 
     fetchMovies();
   }, []);
+
+  // Verifica si la película está en favoritos
+  useEffect(() => {
+    if (singleMovieId) {
+      const savedMovies = JSON.parse(localStorage.getItem('savedMovies')) || [];
+
+      if (Array.isArray(savedMovies)) {
+        setIsFavorite(savedMovies.includes(singleMovieId));
+      }
+    }
+  }, [singleMovieId]);
+
+  // Guardar película en localStorage
+
   const saveMovieToLocalStorage = (movieId) => {
     try {
-      // Verificar si ya existe algún dato en el localStorage
       const savedMovies = JSON.parse(localStorage.getItem('savedMovies')) || [];
-  
-      // Verificar si la película ya está guardada
       if (!savedMovies.includes(movieId)) {
-        savedMovies.push(movieId); // Agregar el ID al arreglo
-        localStorage.setItem('savedMovies', JSON.stringify(savedMovies)); // Guardar en el localStorage
-        window.alert(`Película con ID ${movieId} guardada en el localStorage.`);
+        savedMovies.push(movieId);
+        localStorage.setItem('savedMovies', JSON.stringify(savedMovies));
+        setIsFavorite(true);
+        alert(`Película con ID ${movieId} guardada en favoritos.`);
       } else {
-        window.alert(`La película con ID ${movieId} ya está guardada.`);
+        alert(`La película con ID ${movieId} ya está en favoritos.`);
       }
     } catch (error) {
-      console.error('Error al guardar la película en el localStorage:', error);
+      console.error('Error al guardar la película:', error);
     }
   };
-  
+  // Eliminar película de localStorage
+  const removeMovieFromLocalStorage = (movieId) => {
+    try {
+      const savedMovies = JSON.parse(localStorage.getItem('savedMovies')) || [];
+      const updatedMovies = savedMovies.filter((id) => id !== movieId);
+      localStorage.setItem('savedMovies', JSON.stringify(updatedMovies));
+      setIsFavorite(false);
+      alert('Película eliminada de favoritos');
+    } catch (error) {
+      console.error('Error al eliminar la película:', error);
+      alert('Hubo un error al eliminar la película. Intenta nuevamente.');
+    }
+  };
+
   return (
     <>
       <div className="lg:mt-20 mt-10">
         {movieDetails ? (
-          <div className="lg:flex  shadow-md rounded-lg p-6 mt-14 sm:mb-5 md:mb-5 w-[90%] mx-auto">
+          <div className="lg:flex shadow-md rounded-lg p-6 mt-14 sm:mb-5 md:mb-5 w-[90%] mx-auto">
             <div className="ml-4">
               <Image
                 src={`https://image.tmdb.org/t/p/w500${movieDetails.backdrop_path}`}
@@ -91,10 +115,15 @@ export default function SingleMovie() {
                 <strong>Rating:</strong> {movieDetails.vote_average}
               </p>
               <div className="flex justify-end">
-                <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-blue-700 mt-10" 
-                onClick={() => saveMovieToLocalStorage(movieDetails.id)}
+                <button
+                  className={`px-4 py-2 rounded mt-10 ${isFavorite ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                  onClick={() =>
+                    isFavorite
+                      ? removeMovieFromLocalStorage(movieDetails.id)
+                      : saveMovieToLocalStorage(movieDetails.id)
+                  }
                 >
-                  Add to Favorites
+                  {isFavorite ? 'Delete from Favorites' : 'Add to Favorites'}
                 </button>
               </div>
             </div>

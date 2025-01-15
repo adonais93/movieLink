@@ -28,10 +28,23 @@ const Favorites = () => {
     }
   }, []); // Solo se ejecuta una vez cuando el componente se monta
 
+  const clearFavorites = () => {
+    localStorage.removeItem("savedMovies");
+    window.alert("All favorites cleared!");
+    window.location.reload();
+  };
+  
+
   return (
     <div className='lg:mt-20 mt-16'>
         <div className='flex-col mx-auto'>
             <h1 className='text-4xl text-green-600 border-b border-green-600 w-[90%] mx-auto mb-10'>Favorites</h1>
+            <div className="flex items-center justify-center w-full mx-auto">
+            <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700  my-4s" onClick={clearFavorites}>
+              Clear All Favorites
+            </button>
+          </div>
+
 
             <div className="mx-auto w-[80%]">
             {movieDetails.length > 0 ? (

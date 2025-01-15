@@ -18,7 +18,7 @@ const Movies = () => {
         });
         setMovies(response.data.results);
         setTotalPages(response.data.total_pages);
-        console.log(response.data)
+        console.log(response.data.results.length=1000);
       } catch (error) {
         console.error('Error fetching movies:', error);
       }

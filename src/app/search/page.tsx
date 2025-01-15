@@ -2,92 +2,124 @@
 import { useEffect, useState } from 'react';
 import tmdb from '../../../utils/tmdbs';
 import Image from 'next/image';
+import Link from 'next/link';
+
 export default function Search() {
   const [title, setTitle] = useState('');
-  const [moviesId, setMoviesId] = useState([]);
-  const [movieDetails, setMovieDetails] = useState(null);
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1); // Track current page
+  const [totalPages, setTotalPages] = useState(1);   // Track total pages
 
   useEffect(() => {
     // Obtener los parámetros de la URL
     const queryParams = new URLSearchParams(window.location.search);
     const movieName = queryParams.get('query'); // Asumiendo que el parámetro es 'query'
-    console.log('Movie name from URL:', movieName);
-    
     if (movieName) {
       setTitle(movieName);
     }
-    // Este se ejecutará cuando 'title' cambie
-    console.log('Updated Movie name:', title);
+  }, []);
 
-    const fetchMovies = async () => {
-      try {
-        const response = await tmdb.get('/movie/popular');
-        console.log(
-          'movies:', 
-          response.data.results.filter(movie =>  movie.original_title.toLowerCase().includes(title.toLowerCase()))
-        );
-        setMoviesId(response.data.results.filter(movie =>  movie.original_title.toLowerCase().includes(title.toLowerCase())).map(movie => movie.id));
-        
-        //setMovies(response.data.results);
-      } catch (error) {
-        console.error('Error fetching movies:', error);
-      }
-    };
+  const fetchMovies = async (page) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await tmdb.get('/movie/popular', {
+        params: {
+          page: page, // Pass the current page to fetch the appropriate results
+        },
+      });
+      const filteredMovies = response.data.results.filter(movie =>
+        movie.original_title.toLowerCase().includes(title.toLowerCase())
+      );
 
-    fetchMovies();
-  }, [title]);
-  console.log("id: ", moviesId);
+      setMovies(filteredMovies);
+      setTotalPages(response.data.total_pages); // Get the total pages from the response
+    } catch (error) {
+      setError('Error fetching movies. Please try again later.');
+      console.error('Error fetching movies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchMovieDetails = async () => {
-      if (!moviesId) return;
+    if (title) {
+      fetchMovies(currentPage); // Fetch movies for the current page
+    }
+  }, [title, currentPage]); // Re-fetch when the title or currentPage changes
 
-      try {
-        const response = await tmdb.get(`/movie/${moviesId}`);
-        setMovieDetails(response.data);
-      } catch (error) {
-        console.error('Error fetching movie details:', error);
-      }
-    };
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prevPage => prevPage + 1);
+    }
+  };
 
-    fetchMovieDetails();
-  }, [moviesId]);
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prevPage => prevPage - 1);
+    }
+  };
+
   return (
     <div>
-       <div className="lg:mt-20 mt-10">
-              {movieDetails ? (
-                <div className="lg:flex  shadow-md rounded-lg p-6 mt-14 sm:mb-5 md:mb-5 w-[90%] mx-auto">
-                  <div className="ml-4">
-                    <Image
-                      src={`https://image.tmdb.org/t/p/w500${movieDetails.backdrop_path}`}
-                      alt={movieDetails.title || 'Movie Poster'}
-                      width={1000}
-                      height={600}
-                      className="rounded-md"
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <h1 className="text-3xl font-bold text-green-600 mb-4">{movieDetails.title}</h1>
-                    <p className="text-gray-100 mb-4">{movieDetails.overview}</p>
-                    <p className="mt-4 text-gray-100">
-                      <strong>Release Date:</strong> {movieDetails.release_date}
-                    </p>
-                    <p className="mt-2 text-gray-100">
-                      <strong>Rating:</strong> {movieDetails.vote_average}
-                    </p>
-                    <div className="flex justify-end">
-                      <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-blue-700 mt-10" 
-                      onClick={() => saveMovieToLocalStorage(movieDetails.id)}
-                      >
-                        Add to Favorites
-                      </button>
-                    </div>
-                  </div>
+      <div className="lg:mt-20 mt-10">
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-8 item-center mb-4">
+        <button
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+          className="px-4 py-2 text-white rounded-md mr-4 "
+        >
+          Previous
+        </button>
+        <span className="text-lg font-semibold text-white">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 text-white rounded-md ml-4 "
+        >
+          Next
+        </button>
+      </div>
+        {loading ? (
+          <p className="text-gray-500 text-center">Loading movies...</p>
+        ) : error ? (
+          <p className="text-red-500 text-center">{error}</p>
+        ) : movies.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-[90%] mx-auto">
+            {movies.map((movie) => (
+              <Link key={movie.id} href={`/single-movie?id=${movie.id}`}>
+                <div className="shadow-md rounded-lg p-6 bg-white dark:bg-gray-800">
+                  <Image
+                    src={`https://image.tmdb.org/t/p/w500${movie.backdrop_path}`}
+                    alt={movie.title || 'Movie Poster'}
+                    width={300}
+                    height={180}
+                    className="rounded-md"
+                  />
+                  <h1 className="text-xl font-bold text-green-600 mt-4 mb-2">
+                    {movie.title}
+                  </h1>
+                  <p className="mt-4 text-gray-500">
+                    <strong>Release Date:</strong> {movie.release_date}
+                  </p>
+                  <p className="mt-2 text-gray-500">
+                    <strong>Rating:</strong> {movie.vote_average}
+                  </p>
                 </div>
-              ) : (
-                <p className="text-gray-500 text-center">Loading movie details...</p>
-              )}
-            </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center">No movies found...</p>
+        )}
+      </div>
+
+      
     </div>
   );
 }

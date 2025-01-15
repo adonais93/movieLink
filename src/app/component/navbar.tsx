@@ -26,13 +26,13 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 flex w-full  items-center justify-center bg-zinc-50 py-2 shadow-dark-mild dark:bg-neutral-700 mx-auto lg:px-5">
+    <nav className="fixed z-50 top-0 flex w-full  items-center justify-center bg-zinc-50 py-2 shadow-dark-mild dark:bg-neutral-700 mx-auto lg:px-5">
       <div className="flex w-full items-center  px-3 mx-auto">
       <Link href="/" className="flex w-full ">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-8 h-8 text-green-400">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span className="ml-2 text-xl font-semibold">MovieHub</span>
+          <span className="ml-2 text-xl font-semibold">MovieLink</span>
       </Link>
         
       <div className="justify-end lg:block items-center w-full">
@@ -70,7 +70,7 @@ const Navbar = () => {
           </div>
 
           {/* Para pantallas pequeñas (lg:hidden) */}
-          <div className="lg:hidden flex space-x-2 items-center">
+          <div className="lg:hidden flex w-full space-x-2 items-center justify-end pr-4">
             <Link href="/favorites">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
